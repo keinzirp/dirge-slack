@@ -1,0 +1,8 @@
+packages:
+  - .
+
+minimumReleaseAge: 4320
+
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true

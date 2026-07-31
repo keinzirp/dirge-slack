@@ -1,0 +1,31 @@
+{
+  "name": "dirge-slack",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.5.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "imports": {
+    "#src/*": "./src/*"
+  },
+  "scripts": {
+    "check": "just check",
+    "test": "just test",
+    "lint": "just lint",
+    "fix": "just fix",
+    "qa": "just qa",
+    "start": "just start"
+  },
+  "dependencies": {
+    "@slack/bolt": "5.0.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.5",
+    "@types/node": "26.1.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
