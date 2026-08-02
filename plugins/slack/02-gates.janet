@@ -1,4 +1,4 @@
-(def check-passed false)
+(var check-passed false)
 
 (defn bash-command [ctx]
   (or (get-in ctx [:args "command"]) ""))
