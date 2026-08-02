@@ -37,7 +37,12 @@ const checkedGit = async (options: {
   return result
 }
 
+const cleanDirgeState = async (options: { cwd: string }): Promise<void> => {
+  await checkedGit({ cwd: options.cwd, args: ['clean', '-fd', '.dirge'] })
+}
+
 const isDirty = async (options: { cwd: string }): Promise<boolean> => {
+  await cleanDirgeState(options)
   const result = await checkedGit({
     cwd: options.cwd,
     args: ['status', '--porcelain'],
@@ -67,6 +72,10 @@ const ensureWorktree = async (options: {
     if (await isDirty({ cwd: thread.worktreePath })) {
       throw new Error(`Worktree is dirty: ${thread.worktreePath}`)
     }
+    await installPnpmDeps({
+      cwd: thread.worktreePath,
+      timeoutMs: gitConfig.timeoutMs,
+    })
     return {
       created: false,
       worktreePath: thread.worktreePath,
@@ -113,6 +122,7 @@ const ensureWorktree = async (options: {
       throw new Error(result.stderr || result.stdout)
     }
 
+    await installPnpmDeps({ cwd: worktreePath, timeoutMs: gitConfig.timeoutMs })
     thread.hasWorktree = true
     thread.branchName = branchName
     thread.worktreePath = worktreePath
@@ -122,7 +132,7 @@ const ensureWorktree = async (options: {
   throw new Error('Could not allocate a unique worktree name')
 }
 
-const exists = async (filePath: string): Promise<boolean> => {
+async function exists(filePath: string): Promise<boolean> {
   try {
     await access(filePath)
     return true
@@ -131,11 +141,11 @@ const exists = async (filePath: string): Promise<boolean> => {
   }
 }
 
-const installPnpmDeps = async (options: {
+async function installPnpmDeps(options: {
   cwd: string
   timeoutMs: number
   signal?: AbortSignal
-}): Promise<void> => {
+}): Promise<void> {
   if (
     !(await exists(path.join(options.cwd, 'pnpm-lock.yaml'))) ||
     (await exists(path.join(options.cwd, 'node_modules')))
@@ -208,6 +218,7 @@ const commitIfNeeded = async (options: {
     return undefined
   }
 
+  await cleanDirgeState({ cwd: options.cwd })
   await checkedGit({ cwd: options.cwd, args: ['add', '-A'] })
   await checkedGit({
     cwd: options.cwd,
@@ -323,6 +334,7 @@ const cleanupWorktree = async (options: {
 
 export {
   checkedGit,
+  cleanDirgeState,
   cleanupWorktree,
   commitIfNeeded,
   createPr,
