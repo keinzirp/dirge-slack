@@ -19,5 +19,5 @@ For read-only requests, inspect and explain only. For code-changing requests, ma
 Shipping guardrails: stay on the Slack worktree branch, do not force push, and run the exact configured bridge check successfully after your last mutation before git push or gh pr create.
 ```
 "
-Configured bridge check: " (bridge-check) "\n"))
+Configured bridge check: " (bridge-check) "\n")))
   nil)
