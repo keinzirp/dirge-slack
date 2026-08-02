@@ -4,6 +4,7 @@ type ParsedDirgeOutput = {
   finalResponse: string
   changedFiles: string[]
   isError: boolean
+  errorSummary?: string
 }
 
 const parseJsonLine = (line: string): StreamEvent | undefined => {
@@ -45,6 +46,7 @@ const filesFromEvent = (event: StreamEvent): string[] => {
 const parseDirgeOutput = (output: string): ParsedDirgeOutput => {
   let finalResponse = ''
   let isError = false
+  let resultSubtype = ''
   const changedFiles = new Set<string>()
 
   for (const line of output.split('\n')) {
@@ -57,8 +59,10 @@ const parseDirgeOutput = (output: string): ParsedDirgeOutput => {
     }
 
     if (event.type === 'result') {
-      finalResponse =
-        typeof event.result === 'string' ? event.result : finalResponse
+      if (typeof event.result === 'string' && event.result.trim()) {
+        finalResponse = event.result
+      }
+      resultSubtype = typeof event.subtype === 'string' ? event.subtype : ''
       isError = event.is_error === true
       changedFiles.clear()
     } else {
@@ -77,6 +81,11 @@ const parseDirgeOutput = (output: string): ParsedDirgeOutput => {
     finalResponse: finalResponse || 'Done.',
     changedFiles: [...changedFiles],
     isError,
+    errorSummary: isError
+      ? resultSubtype === 'error_max_turns'
+        ? 'Dirge hit max agent turns'
+        : resultSubtype || finalResponse || 'Dirge failed'
+      : undefined,
   }
 }
 

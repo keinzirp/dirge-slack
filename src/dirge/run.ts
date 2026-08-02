@@ -24,6 +24,7 @@ type DirgeRunResult = {
   changedFiles: string[]
   rawLog: string
   timedOut: boolean
+  errorSummary?: string
 }
 
 const getDirgeArgs = (options: RunDirgeOptions): string[] => {
@@ -76,6 +77,7 @@ const runDirge = async (options: RunDirgeOptions): Promise<DirgeRunResult> => {
     changedFiles: parsed.changedFiles,
     rawLog: result.output,
     timedOut: result.timedOut,
+    errorSummary: parsed.errorSummary,
   }
 }
 

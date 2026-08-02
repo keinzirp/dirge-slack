@@ -1,3 +1,4 @@
+import type { DirgeRunResult } from '#src/dirge/index.ts'
 import { runDirge } from '#src/dirge/index.ts'
 import type { Config } from '#src/env.ts'
 import {
@@ -8,6 +9,12 @@ import {
   verifyGhAuth,
 } from '#src/git/index.ts'
 import type { ThreadState } from '#src/state/session.ts'
+
+const dirgeErrorMessage = (result: DirgeRunResult): string => {
+  return result.timedOut
+    ? 'Dirge timed out'
+    : (result.errorSummary ?? `Dirge exited ${result.exitCode}`)
+}
 
 const runReadJob = async (options: {
   prompt: string
@@ -31,9 +38,7 @@ const runReadJob = async (options: {
   })
 
   if (!result.ok) {
-    throw new Error(
-      result.timedOut ? 'Dirge timed out' : `Dirge exited ${result.exitCode}`,
-    )
+    throw new Error(dirgeErrorMessage(result))
   }
 
   return result.finalResponse
@@ -82,9 +87,7 @@ const runCodeJob = async (options: {
   })
 
   if (!result.ok) {
-    throw new Error(
-      result.timedOut ? 'Dirge timed out' : `Dirge exited ${result.exitCode}`,
-    )
+    throw new Error(dirgeErrorMessage(result))
   }
 
   const checks = await runChecks({

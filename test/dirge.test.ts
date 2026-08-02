@@ -34,6 +34,14 @@ describe('Dirge helpers', () => {
       finalResponse: 'done',
       changedFiles: ['src/a.ts'],
       isError: false,
+      errorSummary: undefined,
     })
+  })
+
+  test('parses stream-json max-turn errors', ({ expect }) => {
+    const parsed = parseDirgeOutput(
+      '{"type":"result","subtype":"error_max_turns","is_error":true,"result":"","files_changed":[]}',
+    )
+    expect(parsed.errorSummary).toBe('Dirge hit max agent turns')
   })
 })
