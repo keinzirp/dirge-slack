@@ -70,15 +70,14 @@ const ensureWorktree = async (options: {
 
   if (thread.hasWorktree && thread.worktreePath && thread.branchName) {
     await cleanDirgeState({ cwd: thread.worktreePath })
-    if (await isDirty({ cwd: thread.worktreePath })) {
-      throw new Error(`Worktree is dirty: ${thread.worktreePath}`)
-    }
+    const hasPendingChanges = await isDirty({ cwd: thread.worktreePath })
     await installPnpmDeps({
       cwd: thread.worktreePath,
       timeoutMs: gitConfig.timeoutMs,
     })
     return {
       created: false,
+      hasPendingChanges,
       worktreePath: thread.worktreePath,
       branchName: thread.branchName,
     }
@@ -127,7 +126,7 @@ const ensureWorktree = async (options: {
     thread.hasWorktree = true
     thread.branchName = branchName
     thread.worktreePath = worktreePath
-    return { created: true, worktreePath, branchName }
+    return { created: true, hasPendingChanges: false, worktreePath, branchName }
   }
 
   throw new Error('Could not allocate a unique worktree name')

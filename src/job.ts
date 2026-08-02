@@ -54,7 +54,9 @@ const runCodeJob = async (options: {
   })
   const transitionNote = worktree.created
     ? `This Slack thread is now running in a Git worktree at ${worktree.worktreePath}. Earlier messages may have inspected the base repo. Re-read files before editing and do not rely on stale file contents from prior turns.\n\n`
-    : ''
+    : worktree.hasPendingChanges
+      ? 'This Slack thread is continuing in a worktree with uncommitted changes from a prior failed run. Inspect git status and git diff before editing, then continue from that state.\n\n'
+      : ''
 
   const result = await runDirge({
     cwd: worktree.worktreePath,
