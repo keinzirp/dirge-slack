@@ -104,7 +104,7 @@ const verifySlackPlugin = async (options: {
   const result = await runDirge({
     cwd: options.cwd,
     prompt: 'status check',
-    sessionId: 'dirge-slack-startup-check',
+    sessionId: `dirge-slack-startup-check-${Date.now()}`,
     readOnly: true,
     promptName: 'ask',
     config: {
