@@ -26,6 +26,28 @@ describe('Dirge helpers', () => {
     ).toEqual(expect.arrayContaining(['--restrictive', '--prompt', 'ask']))
   })
 
+  test('uses sandbox off for code runs', ({ expect }) => {
+    expect(
+      getDirgeArgs({
+        cwd: '/repo',
+        prompt: 'fix',
+        sessionId: 's1',
+        readOnly: false,
+        promptName: 'code',
+        config: {
+          bin: 'dirge',
+          maxTurns: '60',
+          sandbox: 'bwrap',
+          timeoutMs: 1000,
+          rawLogs: false,
+          provider: undefined,
+          model: undefined,
+          configDir: '/tmp/dirge-config',
+        },
+      }),
+    ).toEqual(expect.arrayContaining(['--accept-all', '--sandbox', 'off']))
+  })
+
   test('parses stream-json result envelope', ({ expect }) => {
     const parsed = parseDirgeOutput(
       '{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"sid","files_changed":["src/a.ts"]}\n',

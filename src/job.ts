@@ -102,7 +102,9 @@ const runCodeJob = async (options: {
   const files = result.changedFiles
   const pr = await findPr({ cwd: worktree.worktreePath })
   if (!pr?.url) {
-    throw new Error('Dirge did not create a pull request')
+    throw new Error(
+      `Dirge did not create a pull request\n${result.finalResponse}`,
+    )
   }
   thread.prUrl = pr.url
   thread.prState = pr.state

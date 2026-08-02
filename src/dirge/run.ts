@@ -28,6 +28,7 @@ type DirgeRunResult = {
 }
 
 const getDirgeArgs = (options: RunDirgeOptions): string[] => {
+  const sandbox = options.readOnly ? options.config.sandbox : 'off'
   const args = [
     '-p',
     '--session',
@@ -40,7 +41,7 @@ const getDirgeArgs = (options: RunDirgeOptions): string[] => {
     '--max-agent-turns',
     options.config.maxTurns,
     '--sandbox',
-    options.config.sandbox,
+    sandbox,
   ]
 
   if (options.config.provider) {
