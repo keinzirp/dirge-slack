@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises'
+import { access, mkdir, rm } from 'node:fs/promises'
 import path from 'node:path'
 
 import type { GitConfig } from '#src/env.ts'
@@ -122,6 +122,39 @@ const ensureWorktree = async (options: {
   throw new Error('Could not allocate a unique worktree name')
 }
 
+const exists = async (filePath: string): Promise<boolean> => {
+  try {
+    await access(filePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const installPnpmDeps = async (options: {
+  cwd: string
+  timeoutMs: number
+  signal?: AbortSignal
+}): Promise<void> => {
+  if (
+    !(await exists(path.join(options.cwd, 'pnpm-lock.yaml'))) ||
+    (await exists(path.join(options.cwd, 'node_modules')))
+  ) {
+    return
+  }
+
+  const result = await exec({
+    command: 'pnpm',
+    args: ['install', '--frozen-lockfile'],
+    cwd: options.cwd,
+    timeoutMs: options.timeoutMs,
+    signal: options.signal,
+  })
+  if (result.code !== 0) {
+    throw new Error(result.stderr || result.stdout || 'pnpm install failed')
+  }
+}
+
 const getCheckCommand = (value: string | undefined): 'just qa' | undefined => {
   const command = value === undefined ? 'just qa' : value.trim()
   if (!command || command.toLowerCase() === 'off') {
@@ -144,6 +177,12 @@ const runChecks = async (options: {
   if (!command) {
     return { ok: true, skipped: true, summary: 'checks disabled' }
   }
+
+  await installPnpmDeps({
+    cwd: options.cwd,
+    timeoutMs: options.gitConfig.timeoutMs,
+    signal: options.signal,
+  })
 
   const result = await exec({
     command: 'just',

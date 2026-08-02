@@ -19,6 +19,7 @@ const $env = z.object({
   DIRGE_SLACK_TIMEOUT_MINUTES: z.coerce.number().positive().default(30),
   DIRGE_SLACK_SANDBOX: z.string().min(1).default('bwrap'),
   DIRGE_SLACK_CHECK_COMMANDS: z.string().optional(),
+  DIRGE_SLACK_RAW_LOGS: z.coerce.boolean().default(true),
   DIRGE_SLACK_PROVIDER: z.string().optional(),
   DIRGE_SLACK_MODEL: z.string().optional(),
 })
@@ -53,6 +54,7 @@ const getConfig = once(() => {
       maxTurns: String(env.DIRGE_SLACK_MAX_TURNS),
       sandbox: env.DIRGE_SLACK_SANDBOX,
       timeoutMs,
+      rawLogs: env.DIRGE_SLACK_RAW_LOGS,
       provider: env.DIRGE_SLACK_PROVIDER,
       model: env.DIRGE_SLACK_MODEL,
       configDir: path.join(stateDir, 'dirge-config'),
@@ -74,6 +76,7 @@ type DirgeConfig = {
   maxTurns: string
   sandbox: string
   timeoutMs: number
+  rawLogs: boolean
   provider: string | undefined
   model: string | undefined
   configDir: string

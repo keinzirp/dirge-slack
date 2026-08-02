@@ -65,6 +65,7 @@ const runDirge = async (options: RunDirgeOptions): Promise<DirgeRunResult> => {
     },
     timeoutMs: options.config.timeoutMs,
     signal: options.signal,
+    teeOutput: options.config.rawLogs,
   })
   const parsed = parseDirgeOutput(result.output)
 

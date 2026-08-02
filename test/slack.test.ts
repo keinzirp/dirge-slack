@@ -13,6 +13,7 @@ describe('Slack routing helpers', () => {
   test('classifies read-only and code-changing prompts', ({ expect }) => {
     expect(classifyJob('explain how auth works')).toBe('read')
     expect(classifyJob('fix the auth bug')).toBe('code')
+    expect(classifyJob('Raise a PR which adds a bunny')).toBe('code')
     expect(classifyJob('review and patch if needed')).toBe('code')
   })
 

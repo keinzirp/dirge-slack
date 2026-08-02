@@ -10,6 +10,7 @@ type ExecOptions = {
   env?: NodeJS.ProcessEnv
   signal?: AbortSignal
   timeoutMs?: number
+  teeOutput?: boolean
 }
 
 type ExecEvent = [typeof STDOUT | typeof STDERR, string]
@@ -24,7 +25,15 @@ type ExecResult = {
 }
 
 const exec = async (options: ExecOptions): Promise<ExecResult> => {
-  const { command, args, cwd, env = process.env, signal, timeoutMs } = options
+  const {
+    command,
+    args,
+    cwd,
+    env = process.env,
+    signal,
+    timeoutMs,
+    teeOutput = false,
+  } = options
 
   return await new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -52,10 +61,16 @@ const exec = async (options: ExecOptions): Promise<ExecResult> => {
     child.stdout.on('data', (chunk: string) => {
       stdout += chunk
       output.push([STDOUT, chunk])
+      if (teeOutput) {
+        process.stdout.write(chunk)
+      }
     })
     child.stderr.on('data', (chunk: string) => {
       stderr += chunk
       output.push([STDERR, chunk])
+      if (teeOutput) {
+        process.stderr.write(chunk)
+      }
     })
     child.on('error', reject)
     child.on('close', (code, exitSignal) => {

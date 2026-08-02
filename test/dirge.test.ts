@@ -17,6 +17,7 @@ describe('Dirge helpers', () => {
           maxTurns: '60',
           sandbox: 'bwrap',
           timeoutMs: 1000,
+          rawLogs: false,
           provider: undefined,
           model: undefined,
           configDir: '/tmp/dirge-config',
