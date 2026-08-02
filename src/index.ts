@@ -169,6 +169,7 @@ const main = async () => {
             text,
           })
         } catch (error) {
+          await store.save()
           await replyChunks({
             client,
             channelId: mention.channel,

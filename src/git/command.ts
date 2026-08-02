@@ -69,6 +69,7 @@ const ensureWorktree = async (options: {
   const { thread, prompt, gitConfig } = options
 
   if (thread.hasWorktree && thread.worktreePath && thread.branchName) {
+    await cleanDirgeState({ cwd: thread.worktreePath })
     if (await isDirty({ cwd: thread.worktreePath })) {
       throw new Error(`Worktree is dirty: ${thread.worktreePath}`)
     }
@@ -214,11 +215,10 @@ const commitIfNeeded = async (options: {
   cwd: string
   message: string
 }): Promise<string | undefined> => {
+  await cleanDirgeState({ cwd: options.cwd })
   if (!(await isDirty({ cwd: options.cwd }))) {
     return undefined
   }
-
-  await cleanDirgeState({ cwd: options.cwd })
   await checkedGit({ cwd: options.cwd, args: ['add', '-A'] })
   await checkedGit({
     cwd: options.cwd,
