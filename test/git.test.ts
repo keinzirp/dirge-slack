@@ -23,13 +23,14 @@ describe('Git helpers', () => {
 
   test('uses just qa as the default check command', ({ expect }) => {
     expect(getCheckCommand(undefined)).toBe('just qa')
+    expect(getCheckCommand('just check')).toBe('just check')
     expect(getCheckCommand('off')).toBeUndefined()
     expect(getCheckCommand('')).toBeUndefined()
   })
 
   test('rejects custom check commands', ({ expect }) => {
     expect(() => getCheckCommand('pnpm test')).toThrow(
-      'DIRGE_SLACK_CHECK_COMMANDS only supports "just qa" or "off"',
+      'DIRGE_SLACK_CHECK_COMMANDS only supports "just qa", "just check", or "off"',
     )
   })
 })

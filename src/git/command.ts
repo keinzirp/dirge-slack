@@ -166,17 +166,38 @@ async function installPnpmDeps(options: {
   }
 }
 
-const getCheckCommand = (value: string | undefined): 'just qa' | undefined => {
+type CheckCommand = 'just qa' | 'just check'
+
+const getCheckCommand = (
+  value: string | undefined,
+): CheckCommand | undefined => {
   const command = value === undefined ? 'just qa' : value.trim()
   if (!command || command.toLowerCase() === 'off') {
     return undefined
   }
-  if (command !== 'just qa') {
+  if (command !== 'just qa' && command !== 'just check') {
     throw new Error(
-      'DIRGE_SLACK_CHECK_COMMANDS only supports "just qa" or "off"',
+      'DIRGE_SLACK_CHECK_COMMANDS only supports "just qa", "just check", or "off"',
     )
   }
   return command
+}
+
+const diffSnapshot = async (options: { cwd: string }): Promise<string> => {
+  await cleanDirgeState({ cwd: options.cwd })
+  const status = await checkedGit({
+    cwd: options.cwd,
+    args: ['status', '--porcelain'],
+  })
+  const diff = await checkedGit({
+    cwd: options.cwd,
+    args: ['diff', '--no-ext-diff'],
+  })
+  const stagedDiff = await checkedGit({
+    cwd: options.cwd,
+    args: ['diff', '--cached', '--no-ext-diff'],
+  })
+  return `${status.stdout}\n${diff.stdout}\n${stagedDiff.stdout}`
 }
 
 const runChecks = async (options: {
@@ -195,19 +216,26 @@ const runChecks = async (options: {
     signal: options.signal,
   })
 
+  const before = await diffSnapshot({ cwd: options.cwd })
+  const recipe = command === 'just qa' ? 'qa' : 'check'
   const result = await exec({
     command: 'just',
-    args: ['qa'],
+    args: [recipe],
     cwd: options.cwd,
     timeoutMs: options.gitConfig.timeoutMs,
     signal: options.signal,
   })
+  const after = await diffSnapshot({ cwd: options.cwd })
+  const mutated = before !== after
+  const ok = result.code === 0 && !mutated
 
   return {
-    ok: result.code === 0,
+    ok,
     skipped: false,
-    summary: `${command}: ${result.code === 0 ? 'passed' : 'failed'}`,
-    output: result.output,
+    summary: `${command}: ${ok ? 'passed' : 'failed'}${mutated ? ' (mutated worktree)' : ''}`,
+    output: mutated
+      ? `${result.output}\nCheck command mutated the worktree. Use a read-only check command.`
+      : result.output,
   }
 }
 
