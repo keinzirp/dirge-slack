@@ -19,7 +19,10 @@ SLACK_BOT_TOKEN=xoxb-...
 DIRGE_SLACK_WORKDIR=/path/to/repo
 DIRGE_SLACK_ALLOWED_CHANNELS=C123
 DIRGE_SLACK_ALLOWED_USERS=U123
+DIRGE_DATA_DIR=/srv/dirge-stack/dirge-data
 ```
+
+`just start` loads `.env` with Node's `--env-file`.
 
 ## Use
 

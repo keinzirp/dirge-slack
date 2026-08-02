@@ -4,10 +4,10 @@ help:
     @just --justfile package.just --list
 
 start:
-    node ./src/index.ts
+    node --env-file=.env ./src/index.ts
 
 dev:
-    node --watch ./src/index.ts
+    node --env-file=.env --watch ./src/index.ts
 
 check *args:
     tsc {{ args }}
