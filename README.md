@@ -36,7 +36,7 @@ DIRGE_DATA_DIR=/srv/dirge-stack/dirge-data
 
 - Default checks: `just qa`.
 - Checks: `just qa` by default. Use `just check` for read-only checks, or `off` to disable.
-- Branches use `dirge/<name>`.
+- Branches default to `dirge/<name>`; set `DIRGE_SLACK_BRANCH_PREFIX` per host.
 - Worktrees live under `<DIRGE_SLACK_STATE_DIR>/worktrees/`.
-- The bundled plugin blocks Dirge from running `git push` or `gh pr create` directly.
+- Dirge commits, pushes, and creates PRs. The bundled plugin blocks force pushes and requires checks first.
 - Run `gh auth login` before PR creation.

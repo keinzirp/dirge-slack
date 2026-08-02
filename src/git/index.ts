@@ -1,14 +1,13 @@
 export {
   checkedGit,
   cleanupWorktree,
-  commitIfNeeded,
-  createPr,
   ensureWorktree,
   findPr,
   getCheckCommand,
+  getGitIdentity,
   git,
   isDirty,
-  pushBranch,
   runChecks,
+  verifyGhAuth,
 } from './command.ts'
 export { defaultStateDir, kebabCase, nameFromPrompt } from './name.ts'

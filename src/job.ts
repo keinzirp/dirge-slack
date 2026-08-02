@@ -1,12 +1,11 @@
 import { runDirge } from '#src/dirge/index.ts'
 import type { Config } from '#src/env.ts'
 import {
-  commitIfNeeded,
-  createPr,
   ensureWorktree,
   findPr,
-  pushBranch,
+  getGitIdentity,
   runChecks,
+  verifyGhAuth,
 } from '#src/git/index.ts'
 import type { ThreadState } from '#src/state/session.ts'
 
@@ -52,6 +51,10 @@ const runCodeJob = async (options: {
     prompt,
     gitConfig: config.git,
   })
+  const [gitIdentity] = await Promise.all([
+    getGitIdentity({ cwd: worktree.worktreePath }),
+    verifyGhAuth({ cwd: worktree.worktreePath }),
+  ])
   const transitionNote = worktree.created
     ? `This Slack thread is now running in a Git worktree at ${worktree.worktreePath}. Earlier messages may have inspected the base repo. Re-read files before editing and do not rely on stale file contents from prior turns.\n\n`
     : worktree.hasPendingChanges
@@ -69,6 +72,12 @@ const runCodeJob = async (options: {
     env: {
       DIRGE_SLACK_THREAD_TS: thread.threadTs,
       DIRGE_SLACK_MODE: 'code',
+      DIRGE_SLACK_BRANCH_NAME: worktree.branchName,
+      DIRGE_SLACK_BRANCH_PREFIX: config.git.branchPrefix,
+      GIT_AUTHOR_NAME: gitIdentity.name,
+      GIT_AUTHOR_EMAIL: gitIdentity.email,
+      GIT_COMMITTER_NAME: gitIdentity.name,
+      GIT_COMMITTER_EMAIL: gitIdentity.email,
     },
   })
 
@@ -87,44 +96,19 @@ const runCodeJob = async (options: {
     throw new Error(`checks failed\n${checks.output ?? checks.summary}`)
   }
 
-  const branchShortName = worktree.branchName.replace(
-    config.git.branchPrefix,
-    '',
-  )
-  const commit = await commitIfNeeded({
-    cwd: worktree.worktreePath,
-    message: `Dirge Slack: ${branchShortName}`,
-  })
   const files = result.changedFiles
-
-  if (commit) {
-    await pushBranch({
-      cwd: worktree.worktreePath,
-      branchName: worktree.branchName,
-    })
-    const pr = await createPr({
-      cwd: worktree.worktreePath,
-      branchName: worktree.branchName,
-      baseBranch: config.git.baseBranch,
-      title: `Dirge Slack: ${branchShortName}`,
-      body: `Slack thread: ${thread.channelId}/${thread.threadTs}\n\nSession: ${thread.sessionId}`,
-    })
-    thread.prUrl = pr.url
-    thread.prState = pr.state
-  } else {
-    const pr = await findPr({ cwd: worktree.worktreePath })
-    if (pr?.url) {
-      thread.prUrl = pr.url
-      thread.prState = pr.state
-    }
+  const pr = await findPr({ cwd: worktree.worktreePath })
+  if (!pr?.url) {
+    throw new Error('Dirge did not create a pull request')
   }
+  thread.prUrl = pr.url
+  thread.prState = pr.state
 
   return [
     result.finalResponse,
     '',
     `Worktree: ${worktree.worktreePath}`,
     `Branch: ${worktree.branchName}`,
-    commit ? `Commit: ${commit}` : 'Commit: none',
     thread.prUrl ? `PR: ${thread.prUrl}` : 'PR: none',
     formatChangedFiles(files),
     `Checks: ${checks.summary}`,

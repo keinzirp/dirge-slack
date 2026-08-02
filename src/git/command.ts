@@ -238,29 +238,43 @@ const runChecks = async (options: {
   }
 }
 
-const commitIfNeeded = async (options: {
+type GitIdentity = {
+  name: string
+  email: string
+}
+
+const getGitIdentity = async (options: {
   cwd: string
-  message: string
-}): Promise<string | undefined> => {
-  await cleanDirgeState({ cwd: options.cwd })
-  if (!(await isDirty({ cwd: options.cwd }))) {
-    return undefined
-  }
-  await checkedGit({ cwd: options.cwd, args: ['add', '-A'] })
-  await checkedGit({
-    cwd: options.cwd,
-    args: ['commit', '-m', options.message],
-  })
-  const hash = await checkedGit({
-    cwd: options.cwd,
-    args: ['rev-parse', '--short', 'HEAD'],
-  })
+}): Promise<GitIdentity> => {
+  const [name, email] = await Promise.all([
+    git({ cwd: options.cwd, args: ['config', 'user.name'] }),
+    git({ cwd: options.cwd, args: ['config', 'user.email'] }),
+  ])
 
-  if (await isDirty({ cwd: options.cwd })) {
-    throw new Error('Worktree remained dirty after commit')
+  if (name.code !== 0 || email.code !== 0) {
+    throw new Error('Git identity is not configured')
   }
 
-  return hash.stdout.trim()
+  const identity = {
+    name: name.stdout.trim(),
+    email: email.stdout.trim(),
+  }
+  if (!identity.name || !identity.email) {
+    throw new Error('Git identity is not configured')
+  }
+  return identity
+}
+
+const verifyGhAuth = async (options: { cwd: string }): Promise<void> => {
+  const result = await exec({
+    command: 'gh',
+    args: ['auth', 'status'],
+    cwd: options.cwd,
+    timeoutMs: 30_000,
+  })
+  if (result.code !== 0) {
+    throw new Error(result.stderr || result.stdout || 'gh auth status failed')
+  }
 }
 
 type PullRequestInfo = {
@@ -287,53 +301,6 @@ const findPr = async (options: {
   } catch {
     return undefined
   }
-}
-
-const pushBranch = async (options: {
-  cwd: string
-  branchName: string
-}): Promise<void> => {
-  await checkedGit({
-    cwd: options.cwd,
-    args: ['push', '-u', 'origin', options.branchName],
-    timeoutMs: 120_000,
-  })
-}
-
-const createPr = async (options: {
-  cwd: string
-  branchName: string
-  baseBranch: string
-  title: string
-  body: string
-}): Promise<PullRequestInfo> => {
-  const existing = await findPr({ cwd: options.cwd })
-  if (existing?.url) {
-    return existing
-  }
-
-  const result = await exec({
-    command: 'gh',
-    args: [
-      'pr',
-      'create',
-      '--base',
-      options.baseBranch,
-      '--head',
-      options.branchName,
-      '--title',
-      options.title,
-      '--body',
-      options.body,
-    ],
-    cwd: options.cwd,
-    timeoutMs: 120_000,
-  })
-  if (result.code !== 0) {
-    throw new Error(result.stderr || result.stdout || 'gh pr create failed')
-  }
-
-  return (await findPr({ cwd: options.cwd })) ?? { url: result.stdout.trim() }
 }
 
 const cleanupWorktree = async (options: {
@@ -363,13 +330,12 @@ export {
   checkedGit,
   cleanDirgeState,
   cleanupWorktree,
-  commitIfNeeded,
-  createPr,
   ensureWorktree,
   findPr,
   getCheckCommand,
+  getGitIdentity,
   git,
   isDirty,
-  pushBranch,
   runChecks,
+  verifyGhAuth,
 }

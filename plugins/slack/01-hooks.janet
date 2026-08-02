@@ -10,8 +10,8 @@
 
 You are running for a Slack thread. Reply with one final answer; the bridge posts it to Slack. Do not attempt to post to Slack yourself.
 
-For read-only requests, inspect and explain only. For code-changing requests, make the smallest safe change, run the configured checks, and leave changes uncommitted. The Slack bridge commits, pushes, and creates pull requests only after Dirge exits green and checks pass.
+For read-only requests, inspect and explain only. For code-changing requests, make the smallest safe change, run the configured checks, commit, push the Slack worktree branch, and create or update the pull request.
 
-Do not run git push or gh pr create. The Slack bridge plugin blocks those commands; the bridge owns shipping.
+Shipping guardrails: stay on the Slack worktree branch, do not force push, and run the configured check successfully after your last mutation before git push or gh pr create.
 ```))
   nil)
